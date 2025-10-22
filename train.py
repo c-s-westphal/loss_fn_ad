@@ -5,7 +5,7 @@ Trains VGG models (11/13/16/19) on CIFAR-10 with either:
 - Masked: Cross-entropy loss with neuron masking objective
 
 The masked loss objective encourages robustness by maximizing loss when
-random subsets of neurons are masked (zeroed out) in the final FC layer.
+random subsets of neurons are masked (zeroed out) in the first convolutional layer.
 
 Loss formulation:
     L_total = L_full - λ(t) * min(L_masked_avg, 0.5 * L_full)
@@ -81,13 +81,13 @@ def get_data_loaders(
 
 
 def generate_random_neuron_masks(n_neurons: int, n_masks: int) -> List[np.ndarray]:
-    """Generate random masks for neuron selection in FC layer.
+    """Generate random masks for neuron selection in the first convolutional layer.
 
     Each mask randomly selects between 1 and (n_neurons - 2) neurons to keep.
     Returns masks where True = keep neuron, False = zero out neuron.
 
     Args:
-        n_neurons: Number of neurons in the layer
+        n_neurons: Number of neurons (feature maps) in the layer
         n_masks: Number of different masks to generate
 
     Returns:

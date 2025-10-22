@@ -1,7 +1,7 @@
 """VGG models adapted for CIFAR-10.
 
 Standard VGG architectures modified for 32x32 input images.
-Dropout removed from classifier to be replaced by neuron masking during training.
+Neuron masking is applied to the first convolutional layer during training.
 """
 
 import torch
@@ -25,7 +25,7 @@ class VGG(nn.Module):
         - Convolutional features (based on VGG config)
         - Adaptive average pooling to 1x1
         - Classifier: Linear(512, 512) -> ReLU -> Linear(512, num_classes)
-        - NO DROPOUT (replaced by neuron masking during training)
+        - Neuron masking is applied to the first convolutional layer during training
     """
 
     def __init__(self, vgg_name, num_classes=10, use_batchnorm=True):
@@ -36,11 +36,9 @@ class VGG(nn.Module):
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
 
         # Classifier without dropout
-        # Masking will occur after the first linear layer + ReLU
         self.classifier = nn.Sequential(
             nn.Linear(512, 512),
             nn.ReLU(inplace=True),
-            # NO DROPOUT - masking happens here during training
             nn.Linear(512, num_classes),
         )
 
@@ -104,13 +102,13 @@ class VGG(nn.Module):
     def get_masking_layer(self):
         """Get the layer where neuron masking should be applied.
 
-        This is the ReLU activation after the first classifier Linear layer.
-        In the classifier Sequential, this is index 1.
+        This is the ReLU activation after the first convolutional layer.
+        In the features Sequential, this is index 2 (Conv2d, BatchNorm2d, ReLU).
 
         Returns:
             nn.Module: The ReLU layer where masking hooks should be attached
         """
-        return self.classifier[1]  # ReLU after first Linear layer
+        return self.features[2]  # ReLU after first Conv2d layer
 
 
 def VGG11(num_classes=10, use_batchnorm=True):

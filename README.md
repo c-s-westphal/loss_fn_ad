@@ -4,7 +4,7 @@ Training VGG models on CIFAR-10 with a novel masked loss objective that encourag
 
 ## Overview
 
-This repository implements a training approach that maximizes the loss when random subsets of neurons are masked (zeroed out) in the final fully-connected layer, while minimizing the standard cross-entropy loss. The goal is to make the model more robust and less reliant on specific neurons.
+This repository implements a training approach that maximizes the loss when random subsets of neurons are masked (zeroed out) in the first convolutional layer, while minimizing the standard cross-entropy loss. The goal is to make the model more robust and less reliant on specific neurons.
 
 ### Masked Loss Objective
 
@@ -22,9 +22,9 @@ Where:
 
 ### Masking Strategy
 
-- **Location**: Neurons in the first FC layer of the classifier (after ReLU activation)
+- **Location**: Feature maps in the first convolutional layer (after ReLU activation)
 - **Masks per batch**: 3 random masks
-- **Mask density**: Each mask randomly keeps between 1 and (n_neurons - 2) neurons
+- **Mask density**: Each mask randomly keeps between 1 and (n_neurons - 2) feature maps
 - **Regeneration**: New masks generated every iteration
 
 ## Repository Structure
@@ -152,7 +152,7 @@ VGG models adapted for CIFAR-10 (32x32 input):
 - Standard VGG convolutional layers with batch normalization
 - Adaptive average pooling to 1x1
 - Classifier: Linear(512, 512) → ReLU → Linear(512, 10)
-- **No dropout** (replaced by neuron masking)
+- **Neuron masking applied to the first convolutional layer**
 
 ### Training Configuration
 

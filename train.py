@@ -110,13 +110,13 @@ def generate_random_neuron_masks(n_neurons: int, n_masks: int) -> List[np.ndarra
 
 
 class NeuronMaskingHook:
-    """Forward hook to mask (zero out) specific neurons in a layer."""
+    """Forward hook to mask (zero out) specific neurons/feature maps in a layer."""
 
     def __init__(self, mask: np.ndarray):
         """
         Args:
             mask: Boolean array where True = keep neuron, False = zero out
-                  Shape: (n_neurons,)
+                  Shape: (n_neurons,) or (n_channels,)
         """
         self.mask = torch.from_numpy(mask).bool()
 
@@ -124,15 +124,28 @@ class NeuronMaskingHook:
         """Apply neuron masking during forward pass.
 
         Args:
-            output: Tensor of shape (batch, n_neurons)
+            output: Tensor of shape (batch, n_neurons) for FC layers
+                    or (batch, channels, height, width) for Conv layers
 
         Returns:
             Masked output
         """
         # Clone to avoid in-place modification issues
         masked_output = output.clone()
-        # Broadcast mask across batch dimension
-        masked_output = masked_output * self.mask.unsqueeze(0).to(output.device)
+
+        # Handle different tensor dimensions
+        if output.dim() == 2:
+            # FC layer: (batch, n_neurons)
+            # Broadcast mask across batch dimension: (1, n_neurons)
+            mask_broadcast = self.mask.unsqueeze(0).to(output.device)
+        elif output.dim() == 4:
+            # Conv layer: (batch, channels, height, width)
+            # Broadcast mask across batch and spatial dimensions: (1, channels, 1, 1)
+            mask_broadcast = self.mask.view(1, -1, 1, 1).to(output.device)
+        else:
+            raise ValueError(f"Unexpected output dimension: {output.dim()}")
+
+        masked_output = masked_output * mask_broadcast
         return masked_output
 
 
